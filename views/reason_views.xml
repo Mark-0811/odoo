@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_invoice_cancel_reason_tree" model="ir.ui.view">
+            <field name="name">dex.invoice.cancel.reason.tree</field>
+            <field name="model">dex.invoice.cancel.reason</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_invoice_cancel_reason_form" model="ir.ui.view">
+            <field name="name">dex.invoice.cancel.reason.form</field>
+            <field name="model">dex.invoice.cancel.reason</field>
+            <field name="arch" type="xml">
+                <form string="Invoice Cancellation Reason">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_invoice_cancel_reasons" model="ir.actions.act_window">
+            <field name="name">Invoice Cancellation Reasons</field>
+            <field name="res_model">dex.invoice.cancel.reason</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="menu_invoice_cancel_reasons"
+                  name="Invoice Cancellation Reasons"
+                  parent="account.menu_finance_configuration"
+                  action="action_invoice_cancel_reasons"
+                  groups="dex_invoice_cancel.group_invoice_cancel_reason_manager"
+                  sequence="90"/>
+    </data>
+</odoo>

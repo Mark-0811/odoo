@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_move_form_invoice_approval" model="ir.ui.view">
+            <field name="name">account.move.form.invoice.approval</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="priority">90</field>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <field name="sale_order_id" invisible="1"/>
+                    <field name="dex_cancel_request_pending" invisible="1"/>
+                    <field name="dex_update_request_pending" invisible="1"/>
+                    <field name="dex_cancelled_by_request" invisible="1"/>
+                    <field name="dex_sale_invoice_edit_locked" invisible="1"/>
+                </xpath>
+                <xpath expr="//header/button[@name='action_post'][1]" position="before">
+                    <button name="action_open_dex_cancel_request_wizard" type="object"
+                            string="Cancel Request" class="btn-secondary"
+                            groups="dex_invoice_cancel.group_invoice_cancel_requester"
+                            attrs="{'invisible':['|','|','|',('type','!=','out_invoice'),('state','!=','posted'),('sale_order_id','=',False),('dex_cancel_request_pending','=',True)]}"/>
+                    <button name="action_open_dex_update_request_wizard" type="object"
+                            string="Update Request" class="btn-secondary"
+                            groups="dex_invoice_cancel.group_invoice_update_requester"
+                            attrs="{'invisible':['|','|','|',('type','!=','out_invoice'),('state','!=','draft'),('sale_order_id','=',False),('dex_update_request_pending','=',True)]}"/>
+                </xpath>
+                <xpath expr="//sheet/div[@name='button_box']" position="inside">
+                    <button name="action_view_dex_cancel_requests" type="object"
+                            class="oe_stat_button" icon="fa-ban"
+                            attrs="{'invisible':[('dex_cancel_request_count','=',0)]}">
+                        <field name="dex_cancel_request_count" widget="statinfo" string="Cancel Requests"/>
+                    </button>
+                    <button name="action_view_dex_update_requests" type="object"
+                            class="oe_stat_button" icon="fa-pencil"
+                            attrs="{'invisible':[('dex_update_request_count','=',0)]}">
+                        <field name="dex_update_request_count" widget="statinfo" string="Update Requests"/>
+                    </button>
+                </xpath>
+                <xpath expr="//sheet/div[@name='button_box']" position="after">
+                    <div class="alert alert-warning" role="alert"
+                         attrs="{'invisible':[('dex_cancelled_by_request','=',False)]}">
+                        <strong>Cancelled by Request</strong>
+                        <span> This posted invoice was fully offset by an approved credit memo.</span>
+                        <field name="dex_cancel_credit_move_id" readonly="1"/>
+                    </div>
+                </xpath>
+                <xpath expr="(//field[@name='invoice_date'])[1]" position="attributes">
+                    <attribute name="attrs">{'readonly':['|',('state','!=','draft'),('dex_sale_invoice_edit_locked','=',True)]}</attribute>
+                </xpath>
+                <xpath expr="(//field[@name='invoice_line_ids'])[1]" position="attributes">
+                    <attribute name="attrs">{'readonly':['|',('state','!=','draft'),('dex_sale_invoice_edit_locked','=',True)]}</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_sale_stock_return_exclude_cancelled_invoice" model="ir.ui.view">
+            <field name="name">sale.stock.return.exclude.cancelled.invoice</field>
+            <field name="model">sale.stock.return</field>
+            <field name="inherit_id" ref="dex_return.sale_stock_return_form"/>
+            <field name="priority">90</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='return_line']/tree/field[@name='invoice_id']" position="attributes">
+                    <attribute name="domain">[('id', 'in', invoice_lines), ('move_id.state', '!=', 'cancel'), ('move_id.dex_cancelled_by_request', '=', False)]</attribute>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

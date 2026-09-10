@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_cancel_request_wizard_form" model="ir.ui.view">
+            <field name="name">dex.invoice.cancel.request.wizard.form</field>
+            <field name="model">dex.invoice.cancel.request.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Request Invoice Cancellation">
+                    <group>
+                        <field name="invoice_id"/>
+                        <field name="sale_order_id"/>
+                        <field name="reason_id" options="{'no_create': 1, 'no_open': 1}"/>
+                        <field name="justification" placeholder="Explain why the invoice must be cancelled"/>
+                    </group>
+                    <footer>
+                        <button name="action_submit" type="object" string="Submit Request" class="btn-primary"/>
+                        <button string="Discard" special="cancel" class="btn-secondary"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
