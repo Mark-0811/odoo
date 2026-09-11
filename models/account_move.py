@@ -194,9 +194,6 @@ class AccountMove(models.Model):
 
     def action_open_dex_update_request_wizard(self):
         self.ensure_one()
-        if not self.env.user.has_group(
-                'dex_invoice_cancel.group_invoice_update_requester'):
-            raise UserError(_('You are not allowed to request invoice updates.'))
         self._dex_update_request_eligibility()
         wizard = self.env['dex.invoice.update.request.wizard'].create({
             'invoice_id': self.id,

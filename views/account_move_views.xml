@@ -20,7 +20,6 @@
                             attrs="{'invisible':['|','|','|',('type','!=','out_invoice'),('state','!=','posted'),('sale_order_id','=',False),('dex_cancel_request_pending','=',True)]}"/>
                     <button name="action_open_dex_update_request_wizard" type="object"
                             string="Update Request" class="btn-secondary"
-                            groups="dex_invoice_cancel.group_invoice_update_requester"
                             attrs="{'invisible':['|','|','|',('type','!=','out_invoice'),('state','!=','draft'),('sale_order_id','=',False),('dex_update_request_pending','=',True)]}"/>
                 </xpath>
                 <xpath expr="//sheet/div[@name='button_box']" position="inside">

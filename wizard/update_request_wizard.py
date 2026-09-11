@@ -16,7 +16,7 @@ class InvoiceUpdateRequestWizard(models.TransientModel):
         related='invoice_id.invoice_date', string='Current Invoice Date', readonly=True)
     change_invoice_date = fields.Boolean(string='Change Invoice Date')
     requested_invoice_date = fields.Date(string='Requested Invoice Date')
-    justification = fields.Text(string='Remarks', required=True)
+    justification = fields.Text(string='Remarks')
     line_ids = fields.One2many(
         'dex.invoice.update.request.wizard.line', 'wizard_id', string='Invoice Lines')
 

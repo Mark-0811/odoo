@@ -31,7 +31,8 @@
                         </tree>
                     </field>
                     <group>
-                        <field name="justification" placeholder="Explain why these changes are required"/>
+                        <field name="justification" required="1"
+                               placeholder="Explain why these changes are required"/>
                     </group>
                     <footer>
                         <button name="action_submit" type="object" string="Submit Request" class="btn-primary"/>

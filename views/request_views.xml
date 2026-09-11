@@ -188,7 +188,7 @@
                   name="Invoice Update Requests"
                   parent="account.menu_finance_receivables"
                   action="action_invoice_update_requests"
-                  groups="dex_invoice_cancel.group_invoice_update_requester,dex_invoice_cancel.group_invoice_update_approver"
+                  groups="base.group_user"
                   sequence="81"/>
     </data>
 </odoo>
