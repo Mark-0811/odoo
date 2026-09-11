@@ -7,7 +7,7 @@
         invoices and for reducing or deleting lines on draft invoices created
         from sale orders.
     """,
-    'version': '13.0.1.0.0',
+    'version': '13.0.1.0.1',
     'author': 'John Raymark LLavanes',
     'website': 'https://johnraymarksuuuu.github.io/',
     'license': 'LGPL-3',
@@ -31,6 +31,9 @@
         'wizard/cancel_request_wizard_views.xml',
         'wizard/update_request_wizard_views.xml',
         'views/account_move_views.xml',
+    ],
+    'demo': [
+        'demo/cancellation_reason_demo.xml',
     ],
     'installable': True,
     'application': False,
