@@ -5,6 +5,7 @@ from odoo.exceptions import UserError
 
 
 _MOVE_CREATE_SENTINEL = object()
+_SALE_INVOICE_CREATE_SENTINEL = object()
 _UPDATE_APPLY_SENTINEL = object()
 _CANCEL_APPLY_SENTINEL = object()
 _POST_SENTINEL = object()
@@ -249,6 +250,7 @@ class AccountMoveLine(models.Model):
 
     def _dex_check_sale_invoice_edit(self):
         if (self.env.context.get('dex_invoice_move_initial_create') is _MOVE_CREATE_SENTINEL or
+                self.env.context.get('dex_invoice_sale_creation') is _SALE_INVOICE_CREATE_SENTINEL or
                 self.env.context.get('dex_invoice_post_internal') is _POST_SENTINEL):
             return
         for move in self._dex_locked_sale_invoice_lines().mapped('move_id'):
@@ -259,6 +261,7 @@ class AccountMoveLine(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         if (self.env.context.get('dex_invoice_move_initial_create') is not _MOVE_CREATE_SENTINEL and
+                self.env.context.get('dex_invoice_sale_creation') is not _SALE_INVOICE_CREATE_SENTINEL and
                 self.env.context.get('dex_invoice_post_internal') is not _POST_SENTINEL):
             move_ids = [vals.get('move_id') for vals in vals_list if vals.get('move_id')]
             moves = self.env['account.move'].browse(move_ids).exists()
@@ -272,6 +275,7 @@ class AccountMoveLine(models.Model):
 
     def write(self, vals):
         if (self.env.context.get('dex_invoice_move_initial_create') is _MOVE_CREATE_SENTINEL or
+                self.env.context.get('dex_invoice_sale_creation') is _SALE_INVOICE_CREATE_SENTINEL or
                 self.env.context.get('dex_invoice_post_internal') is _POST_SENTINEL):
             return super(AccountMoveLine, self).write(vals)
         self._dex_check_sale_invoice_edit()
@@ -280,3 +284,13 @@ class AccountMoveLine(models.Model):
     def unlink(self):
         self._dex_check_sale_invoice_edit()
         return super(AccountMoveLine, self).unlink()
+
+
+class SaleOrder(models.Model):
+    _inherit = 'sale.order'
+
+    def action_create_multi_invoices(self, multi_lines, counts):
+        creation_self = self.with_context(
+            dex_invoice_sale_creation=_SALE_INVOICE_CREATE_SENTINEL)
+        return super(SaleOrder, creation_self).action_create_multi_invoices(
+            multi_lines, counts)
