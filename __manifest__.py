@@ -7,7 +7,7 @@
         invoices and for reducing or deleting lines on draft invoices created
         from sale orders.
     """,
-    'version': '13.0.1.0.8',
+    'version': '13.0.1.0.9',
     'author': 'John Raymark LLavanes',
     'website': 'https://johnraymarksuuuu.github.io/',
     'license': 'LGPL-3',

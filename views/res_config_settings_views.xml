@@ -6,30 +6,39 @@
             <field name="model">res.config.settings</field>
             <field name="inherit_id" ref="account.res_config_settings_view_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//div[@id='invoicing_settings']" position="inside">
-                    <div class="col-12 col-lg-6 o_setting_box"
+                <xpath expr="//div[@id='invoicing_settings']" position="after">
+                    <h2 groups="base.group_system">Invoice Request Approval</h2>
+                    <div class="row mt16 o_settings_container"
                          id="dex_invoice_request_approvers"
                          groups="base.group_system">
-                        <div class="o_setting_left_pane"/>
-                        <div class="o_setting_right_pane">
-                            <span class="o_form_label">Invoice Request Approvers</span>
-                            <div class="text-muted">
-                                Select the users authorized to decide invoice cancellation and update requests.
-                                Request emails are sent to these users.
-                            </div>
-                            <div class="content-group mt16">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
                                 <label for="dex_cancel_request_approver_ids"/>
-                                <field name="dex_cancel_request_approver_ids"
-                                       widget="many2many_tags"
-                                       domain="[('active', '=', True), ('share', '=', False)]"
-                                       options="{'no_create': True, 'no_create_edit': True}"/>
+                                <div class="text-muted">
+                                    Users authorized to approve cancellation requests and receive their emails.
+                                </div>
+                                <div class="content-group mt16">
+                                    <field name="dex_cancel_request_approver_ids"
+                                           widget="many2many_tags"
+                                           domain="[('active', '=', True), ('share', '=', False)]"
+                                           options="{'no_create': True, 'no_create_edit': True}"/>
+                                </div>
                             </div>
-                            <div class="content-group mt16">
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
                                 <label for="dex_update_request_approver_ids"/>
-                                <field name="dex_update_request_approver_ids"
-                                       widget="many2many_tags"
-                                       domain="[('active', '=', True), ('share', '=', False)]"
-                                       options="{'no_create': True, 'no_create_edit': True}"/>
+                                <div class="text-muted">
+                                    Users authorized to approve invoice update requests and receive their emails.
+                                </div>
+                                <div class="content-group mt16">
+                                    <field name="dex_update_request_approver_ids"
+                                           widget="many2many_tags"
+                                           domain="[('active', '=', True), ('share', '=', False)]"
+                                           options="{'no_create': True, 'no_create_edit': True}"/>
+                                </div>
                             </div>
                         </div>
                     </div>
