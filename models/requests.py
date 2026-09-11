@@ -120,24 +120,11 @@ class InvoiceRequestMixin(models.AbstractModel):
 
     def _send_email_immediate(self, recipients, subject, body):
         self.ensure_one()
-        parameters = self.env['ir.config_parameter'].sudo()
-        email_from = (
-            parameters.get_param('dex_invoice_cancel.request_email_from') or
-            self.invoice_id.company_id.email or '')
-        email_from = email_from.strip()
-        if not email_from:
-            raise UserError(_(
-                'Configure Request Email From in the invoicing settings.'))
-        mail_server = self.env['ir.mail_server'].sudo()
-        message = mail_server.build_email(
-            email_from=email_from,
-            email_to=recipients,
+        return self.env['dex_mail.mail'].send_immediate(
+            recipients=', '.join(recipients),
             subject=subject,
-            body=body,
-            subtype='html',
-            object_id='%s-%s' % (self.id, self._name),
+            html_text=body,
         )
-        return mail_server.send_email(message)
 
     def _send_request_email(self):
         self.ensure_one()
