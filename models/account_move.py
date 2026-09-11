@@ -180,9 +180,6 @@ class AccountMove(models.Model):
 
     def action_open_dex_cancel_request_wizard(self):
         self.ensure_one()
-        if not self.env.user.has_group(
-                'dex_invoice_cancel.group_invoice_cancel_requester'):
-            raise UserError(_('You are not allowed to request invoice cancellation.'))
         self._dex_cancel_request_eligibility()
         view = self.env.ref('dex_invoice_cancel.view_cancel_request_wizard_form')
         return {

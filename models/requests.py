@@ -260,9 +260,6 @@ class InvoiceCancelRequest(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        if not self.env.user.has_group(
-                'dex_invoice_cancel.group_invoice_cancel_requester'):
-            raise UserError(_('You are not allowed to request invoice cancellation.'))
         sequence = self.env['ir.sequence']
         for vals in vals_list:
             invoice = self.env['account.move'].browse(vals.get('invoice_id')).exists()

@@ -17,7 +17,6 @@
                 <xpath expr="//header/button[@name='action_post'][1]" position="before">
                     <button name="action_open_dex_cancel_request_wizard" type="object"
                             string="Cancel Request" class="btn-secondary"
-                            groups="dex_invoice_cancel.group_invoice_cancel_requester"
                             attrs="{'invisible':['|','|','|',('type','!=','out_invoice'),('state','!=','posted'),('sale_order_id','=',False),('dex_cancel_request_pending','=',True)]}"/>
                     <button name="action_open_dex_update_request_wizard" type="object"
                             string="Update Request" class="btn-secondary"

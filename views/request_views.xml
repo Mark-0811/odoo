@@ -182,7 +182,7 @@
                   name="Invoice Cancellation Requests"
                   parent="account.menu_finance_receivables"
                   action="action_invoice_cancel_requests"
-                  groups="dex_invoice_cancel.group_invoice_cancel_requester,dex_invoice_cancel.group_invoice_cancel_approver"
+                  groups="base.group_user"
                   sequence="80"/>
         <menuitem id="menu_invoice_update_requests"
                   name="Invoice Update Requests"

@@ -1,7 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_cancel_reason_user,invoice cancellation reason user,model_dex_invoice_cancel_reason,base.group_user,1,0,0,0
 access_cancel_reason_manager,invoice cancellation reason manager,model_dex_invoice_cancel_reason,dex_invoice_cancel.group_invoice_cancel_reason_manager,1,1,1,0
-access_cancel_request_requester,invoice cancellation request requester,model_dex_invoice_cancel_request,dex_invoice_cancel.group_invoice_cancel_requester,1,0,1,0
+access_cancel_request_requester,invoice cancellation request requester,model_dex_invoice_cancel_request,base.group_user,1,0,1,0
 access_cancel_request_approver,invoice cancellation request approver,model_dex_invoice_cancel_request,dex_invoice_cancel.group_invoice_cancel_approver,1,1,0,0
 access_update_request_requester,invoice update request requester,model_dex_invoice_update_request,dex_invoice_cancel.group_invoice_update_requester,1,0,1,0
 access_update_request_approver,invoice update request approver,model_dex_invoice_update_request,dex_invoice_cancel.group_invoice_update_approver,1,1,0,0
