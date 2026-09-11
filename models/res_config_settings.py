@@ -15,6 +15,9 @@ class ResConfigSettings(models.TransientModel):
     dex_update_request_approver_ids = fields.Many2many(
         'res.users', 'dex_update_settings_approver_rel',
         'settings_id', 'user_id', string='Update Request Approvers')
+    dex_invoice_request_email_from = fields.Char(
+        string='Request Email From',
+        config_parameter='dex_invoice_cancel.request_email_from')
 
     @api.model
     def _dex_approver_ids(self, parameter, group_xmlid):

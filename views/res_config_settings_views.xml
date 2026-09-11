@@ -31,6 +31,11 @@
                                        domain="[('active', '=', True), ('share', '=', False)]"
                                        options="{'no_create': True, 'no_create_edit': True}"/>
                             </div>
+                            <div class="content-group mt16">
+                                <label for="dex_invoice_request_email_from"/>
+                                <field name="dex_invoice_request_email_from"
+                                       placeholder="Use the invoice company email when empty"/>
+                            </div>
                         </div>
                     </div>
                 </xpath>

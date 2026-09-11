@@ -7,7 +7,7 @@
         invoices and for reducing or deleting lines on draft invoices created
         from sale orders.
     """,
-    'version': '13.0.1.0.6',
+    'version': '13.0.1.0.7',
     'author': 'John Raymark LLavanes',
     'website': 'https://johnraymarksuuuu.github.io/',
     'license': 'LGPL-3',
@@ -19,7 +19,6 @@
         'dex_account_move',
         'dex_invoice_creator',
         'dex_return',
-        'dex_mail',
     ],
     'data': [
         'security/groups.xml',

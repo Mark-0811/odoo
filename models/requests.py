@@ -118,6 +118,27 @@ class InvoiceRequestMixin(models.AbstractModel):
         self.ensure_one()
         return ''
 
+    def _send_email_immediate(self, recipients, subject, body):
+        self.ensure_one()
+        parameters = self.env['ir.config_parameter'].sudo()
+        email_from = (
+            parameters.get_param('dex_invoice_cancel.request_email_from') or
+            self.invoice_id.company_id.email or '')
+        email_from = email_from.strip()
+        if not email_from:
+            raise UserError(_(
+                'Configure Request Email From in the invoicing settings.'))
+        mail_server = self.env['ir.mail_server'].sudo()
+        message = mail_server.build_email(
+            email_from=email_from,
+            email_to=recipients,
+            subject=subject,
+            body=body,
+            subtype='html',
+            object_id='%s-%s' % (self.id, self._name),
+        )
+        return mail_server.send_email(message)
+
     def _send_request_email(self):
         self.ensure_one()
         recipients = self._emails_for_users(self._approver_users())
@@ -149,8 +170,8 @@ class InvoiceRequestMixin(models.AbstractModel):
             details=self._request_email_details(),
             url=escape(self._request_url()),
         )
-        mail = self.env['dex_mail.mail'].send_immediate(', '.join(recipients), subject, body)
-        if not mail:
+        message_id = self._send_email_immediate(recipients, subject, body)
+        if not message_id:
             raise UserError(_('The approver email could not be sent. The request was not submitted.'))
         self._internal_write({
             'request_mail_sent': True,
@@ -189,9 +210,8 @@ class InvoiceRequestMixin(models.AbstractModel):
         )
         try:
             with self.env.cr.savepoint():
-                mail = self.env['dex_mail.mail'].send_immediate(
-                    ', '.join(recipients), subject, body)
-                if not mail:
+                message_id = self._send_email_immediate(recipients, subject, body)
+                if not message_id:
                     raise UserError(_('The decision email could not be sent.'))
         except Exception as exc:
             _logger.exception('Unable to send decision email for %s', self.name)
