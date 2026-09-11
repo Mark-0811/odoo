@@ -7,7 +7,7 @@
         invoices and for reducing or deleting lines on draft invoices created
         from sale orders.
     """,
-    'version': '13.0.1.0.5',
+    'version': '13.0.1.0.6',
     'author': 'John Raymark LLavanes',
     'website': 'https://johnraymarksuuuu.github.io/',
     'license': 'LGPL-3',
@@ -26,6 +26,7 @@
         'security/ir.model.access.csv',
         'security/rules.xml',
         'data/sequence.xml',
+        'views/res_config_settings_views.xml',
         'views/reason_views.xml',
         'views/request_views.xml',
         'wizard/cancel_request_wizard_views.xml',

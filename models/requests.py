@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from ast import literal_eval
 
 from markupsafe import escape
 
@@ -73,15 +74,28 @@ class InvoiceRequestMixin(models.AbstractModel):
     decided_date = fields.Datetime(
         string='Approved or Rejected On', readonly=True, copy=False)
     decision_remarks = fields.Text(string='Decision Remarks', copy=False)
-    request_mail_sent = fields.Boolean(string='Request Email Queued', readonly=True, copy=False)
+    request_mail_sent = fields.Boolean(string='Request Email Sent', readonly=True, copy=False)
 
     _approver_group_xmlid = False
+    _approver_config_parameter = False
     _request_label = 'Invoice Request'
 
     def _approver_users(self):
         self.ensure_one()
-        group = self.env.ref(self._approver_group_xmlid)
-        return group.sudo().users.filtered(lambda user: user.active and not user.share)
+        parameters = self.env['ir.config_parameter'].sudo()
+        configured = parameters.get_param(self._approver_config_parameter)
+        users = self.env['res.users'].sudo()
+        if configured:
+            try:
+                user_ids = literal_eval(configured)
+                if isinstance(user_ids, (list, tuple)):
+                    users = users.browse([int(user_id) for user_id in user_ids])
+            except (SyntaxError, ValueError, TypeError):
+                _logger.exception(
+                    'Invalid configured approver list for %s', self._name)
+        if not users:
+            users = self.env.ref(self._approver_group_xmlid).sudo().users
+        return users.filtered(lambda user: user.active and not user.share)
 
     @api.model
     def _emails_for_users(self, users):
@@ -135,9 +149,9 @@ class InvoiceRequestMixin(models.AbstractModel):
             details=self._request_email_details(),
             url=escape(self._request_url()),
         )
-        mail = self.env['dex_mail.mail'].send_external(', '.join(recipients), subject, body)
+        mail = self.env['dex_mail.mail'].send_immediate(', '.join(recipients), subject, body)
         if not mail:
-            raise UserError(_('The approver email could not be queued. The request was not submitted.'))
+            raise UserError(_('The approver email could not be sent. The request was not submitted.'))
         self._internal_write({
             'request_mail_sent': True,
         })
@@ -175,18 +189,18 @@ class InvoiceRequestMixin(models.AbstractModel):
         )
         try:
             with self.env.cr.savepoint():
-                mail = self.env['dex_mail.mail'].send_external(
+                mail = self.env['dex_mail.mail'].send_immediate(
                     ', '.join(recipients), subject, body)
                 if not mail:
-                    raise UserError(_('The decision email could not be queued.'))
+                    raise UserError(_('The decision email could not be sent.'))
         except Exception as exc:
-            _logger.exception('Unable to queue decision email for %s', self.name)
+            _logger.exception('Unable to send decision email for %s', self.name)
             self._message_log(body=_(
-                'The decision was completed, but its email could not be queued: %s') % str(exc))
+                'The decision was completed, but its email could not be sent: %s') % str(exc))
 
     def _assert_can_decide(self):
         self.ensure_one()
-        if not self.env.user.has_group(self._approver_group_xmlid):
+        if self.env.user not in self._approver_users():
             raise UserError(_('You are not allowed to approve or reject this request.'))
         if self.requested_by_id == self.env.user:
             raise UserError(_('You cannot approve or reject your own request.'))
@@ -230,8 +244,8 @@ class InvoiceRequestMixin(models.AbstractModel):
             if not allowed:
                 raise UserError(_('Submitted invoice requests cannot be modified.'))
             for request in self:
-                if request.state != 'requested' or not self.env.user.has_group(
-                        request._approver_group_xmlid):
+                if (request.state != 'requested' or
+                        self.env.user not in request._approver_users()):
                     raise UserError(_('Only an approver may enter decision remarks.'))
         return super(InvoiceRequestMixin, self).write(vals)
 
@@ -256,6 +270,7 @@ class InvoiceCancelRequest(models.Model):
         'account.move', string='Credit Memo', readonly=True, copy=False)
 
     _approver_group_xmlid = 'dex_invoice_cancel.group_invoice_cancel_approver'
+    _approver_config_parameter = 'dex_invoice_cancel.cancel_request_approver_ids'
     _request_label = 'Invoice Cancellation Request'
 
     @api.model_create_multi
@@ -355,6 +370,7 @@ class InvoiceUpdateRequest(models.Model):
         readonly=True, copy=False)
 
     _approver_group_xmlid = 'dex_invoice_cancel.group_invoice_update_approver'
+    _approver_config_parameter = 'dex_invoice_cancel.update_request_approver_ids'
     _request_label = 'Invoice Update Request'
 
     @api.model_create_multi
