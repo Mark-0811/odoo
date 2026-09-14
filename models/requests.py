@@ -273,6 +273,10 @@ class InvoiceCancelRequest(models.Model):
     reason_id = fields.Many2one(
         'dex.invoice.cancel.reason', string='Cancellation Reason', required=True,
         readonly=True, ondelete='restrict')
+    original_invoice_state = fields.Selection([
+        ('draft', 'Draft'),
+        ('posted', 'Posted'),
+    ], string='Invoice Status When Requested', readonly=True)
     credit_move_id = fields.Many2one(
         'account.move', string='Credit Memo', readonly=True, copy=False)
 
@@ -307,6 +311,7 @@ class InvoiceCancelRequest(models.Model):
                 'partner_id': sudo_invoice.partner_id.id,
                 'currency_id': sudo_invoice.currency_id.id,
                 'amount_total': sudo_invoice.amount_total,
+                'original_invoice_state': sudo_invoice.state,
                 'justification': vals['justification'].strip(),
                 'decided_by_id': False,
                 'decided_date': False,
@@ -336,6 +341,21 @@ class InvoiceCancelRequest(models.Model):
             invoice = request.invoice_id.sudo()
             invoice.invalidate_cache()
             invoice._dex_cancel_request_eligibility(request)
+            if (request.original_invoice_state and
+                    invoice.state != request.original_invoice_state):
+                raise UserError(_(
+                    'The invoice status changed after this request was submitted.'))
+            if invoice.state == 'draft':
+                invoice.with_context(
+                    dex_invoice_cancel_internal=_CANCEL_APPLY_SENTINEL).button_cancel()
+                invoice.with_context(
+                    dex_invoice_cancel_internal=_CANCEL_APPLY_SENTINEL).write({
+                        'dex_cancelled_by_request': True,
+                        'dex_cancel_credit_move_id': False,
+                    })
+                request._complete_decision('approved')
+                request._send_decision_email()
+                continue
             approval_date = fields.Date.context_today(request)
             default_values = {
                 'date': approval_date,
@@ -399,8 +419,16 @@ class InvoiceUpdateRequest(models.Model):
                 invoice, vals.get('line_ids', []))
             change_invoice_date = bool(vals.get('change_invoice_date'))
             requested_invoice_date = vals.get('requested_invoice_date')
+            if sudo_invoice.state == 'draft' and change_invoice_date:
+                raise ValidationError(_(
+                    'Edit Invoice Date directly while the invoice is draft.'))
+            if sudo_invoice.state == 'posted' and vals['line_ids']:
+                raise ValidationError(_('Posted invoice lines cannot be updated.'))
+            if sudo_invoice.state == 'posted' and not change_invoice_date:
+                raise ValidationError(_(
+                    'A posted invoice update request must change Invoice Date.'))
             if not change_invoice_date and not vals['line_ids']:
-                raise ValidationError(_('Request at least one invoice date or line change.'))
+                raise ValidationError(_('Request at least one invoice line change.'))
             if change_invoice_date:
                 if not requested_invoice_date:
                     raise ValidationError(_('Requested Invoice Date is required.'))
@@ -485,8 +513,16 @@ class InvoiceUpdateRequest(models.Model):
 
     def _validate_payload(self, check_snapshot=False):
         self.ensure_one()
+        if self.invoice_id.state == 'draft' and self.change_invoice_date:
+            raise ValidationError(_(
+                'Edit Invoice Date directly while the invoice is draft.'))
+        if self.invoice_id.state == 'posted' and self.line_ids:
+            raise ValidationError(_('Posted invoice lines cannot be updated.'))
+        if self.invoice_id.state == 'posted' and not self.change_invoice_date:
+            raise ValidationError(_(
+                'A posted invoice update request must change Invoice Date.'))
         if not self.change_invoice_date and not self.line_ids:
-            raise ValidationError(_('Request at least one invoice date or line change.'))
+            raise ValidationError(_('Request at least one invoice line change.'))
         if self.change_invoice_date:
             if not self.requested_invoice_date:
                 raise ValidationError(_('Requested Invoice Date is required.'))
@@ -574,8 +610,9 @@ class InvoiceUpdateRequest(models.Model):
                     line.unlink()
                 else:
                     line.write({'quantity': change.target_quantity})
-            invoice.with_context(update_context)._recompute_dynamic_lines(
-                recompute_all_taxes=True)
+            if request.line_ids:
+                invoice.with_context(update_context)._recompute_dynamic_lines(
+                    recompute_all_taxes=True)
             invoice._check_balanced()
             request._complete_decision('approved')
             request._send_decision_email()

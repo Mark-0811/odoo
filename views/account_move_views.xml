@@ -17,10 +17,13 @@
                 <xpath expr="//header/button[@name='action_post'][1]" position="before">
                     <button name="action_open_dex_cancel_request_wizard" type="object"
                             string="Cancel Request" class="btn-secondary"
-                            attrs="{'invisible':['|','|','|',('type','!=','out_invoice'),('state','!=','posted'),('sale_order_id','=',False),('dex_cancel_request_pending','=',True)]}"/>
+                            attrs="{'invisible':['|','|','|',('type','!=','out_invoice'),('state','not in',('draft','posted')),('sale_order_id','=',False),('dex_cancel_request_pending','=',True)]}"/>
                     <button name="action_open_dex_update_request_wizard" type="object"
                             string="Update Request" class="btn-secondary"
-                            attrs="{'invisible':['|','|','|',('type','!=','out_invoice'),('state','!=','draft'),('sale_order_id','=',False),('dex_update_request_pending','=',True)]}"/>
+                            attrs="{'invisible':['|','|','|',('type','!=','out_invoice'),('state','not in',('draft','posted')),('sale_order_id','=',False),('dex_update_request_pending','=',True)]}"/>
+                </xpath>
+                <xpath expr="//header/button[@name='button_cancel']" position="attributes">
+                    <attribute name="attrs">{'invisible':['|',('sale_order_id','!=',False),'|',('id','=',False),('state','!=','draft')]}</attribute>
                 </xpath>
                 <xpath expr="//sheet/div[@name='button_box']" position="inside">
                     <button name="action_view_dex_cancel_requests" type="object"
@@ -38,12 +41,12 @@
                     <div class="alert alert-warning" role="alert"
                          attrs="{'invisible':[('dex_cancelled_by_request','=',False)]}">
                         <strong>Cancelled by Request</strong>
-                        <span> This posted invoice was fully offset by an approved credit memo.</span>
+                        <span> This invoice was cancelled through the approved request workflow.</span>
                         <field name="dex_cancel_credit_move_id" readonly="1"/>
                     </div>
                 </xpath>
                 <xpath expr="(//field[@name='invoice_date'])[1]" position="attributes">
-                    <attribute name="attrs">{'readonly':['|',('state','!=','draft'),('dex_sale_invoice_edit_locked','=',True)]}</attribute>
+                    <attribute name="attrs">{'readonly':[('state','!=','draft')]}</attribute>
                 </xpath>
                 <xpath expr="(//field[@name='invoice_line_ids'])[1]" position="attributes">
                     <attribute name="attrs">{'readonly':['|',('state','!=','draft'),('dex_sale_invoice_edit_locked','=',True)]}</attribute>

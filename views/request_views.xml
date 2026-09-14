@@ -43,6 +43,7 @@
                                 <field name="sale_order_id"/>
                                 <field name="partner_id"/>
                                 <field name="reason_id"/>
+                                <field name="original_invoice_state"/>
                                 <field name="credit_move_id" attrs="{'invisible':[('credit_move_id','=',False)]}"/>
                             </group>
                             <group>
@@ -105,7 +106,7 @@
                                 class="btn-primary"
                                 groups="dex_invoice_cancel.group_invoice_update_approver"
                                 attrs="{'invisible':[('state','!=','requested')]}"
-                                confirm="Apply these exact changes to the draft invoice?"/>
+                                confirm="Apply these exact approved changes to the invoice?"/>
                         <button name="action_reject" type="object" string="Reject"
                                 groups="dex_invoice_cancel.group_invoice_update_approver"
                                 attrs="{'invisible':[('state','!=','requested')]}"

@@ -61,8 +61,8 @@ class AccountMove(models.Model):
         invoice = self.sudo()
         if invoice.type != 'out_invoice':
             raise UserError(_('Only customer invoices can be cancelled through this workflow.'))
-        if invoice.state != 'posted':
-            raise UserError(_('The customer invoice must be posted.'))
+        if invoice.state not in ('draft', 'posted'):
+            raise UserError(_('The customer invoice must be draft or posted.'))
         if not invoice.sale_order_id:
             raise UserError(_('The customer invoice must be linked to a sale order.'))
         if invoice.dex_cancelled_by_request:
@@ -73,6 +73,8 @@ class AccountMove(models.Model):
             and request.id != current_request_id)
         if pending_requests:
             raise UserError(_('This invoice already has a pending cancellation request.'))
+        if invoice.dex_update_request_pending:
+            raise UserError(_('Resolve the pending Invoice Update Request first.'))
         if not invoice.currency_id.is_zero(invoice.applied_payment):
             raise UserError(_('Cancel the applied payment before requesting invoice cancellation.'))
         if (invoice.whtax_payment_count or
@@ -107,16 +109,20 @@ class AccountMove(models.Model):
         invoice = self.sudo()
         if invoice.type != 'out_invoice':
             raise UserError(_('Only customer invoices can be updated through this workflow.'))
-        if invoice.state != 'draft':
-            raise UserError(_('Only draft customer invoices can be updated.'))
+        if invoice.state not in ('draft', 'posted'):
+            raise UserError(_('Only draft or posted customer invoices can be updated.'))
         if not invoice.sale_order_id:
-            raise UserError(_('The draft invoice must be linked to a sale order.'))
+            raise UserError(_('The invoice must be linked to a sale order.'))
+        if invoice.dex_cancelled_by_request:
+            raise UserError(_('An invoice cancelled by request cannot be updated.'))
         current_request_id = current_request.id if current_request else False
         pending_requests = invoice.dex_update_request_ids.filtered(
             lambda request: request.state == 'requested'
             and request.id != current_request_id)
         if pending_requests:
             raise UserError(_('This invoice already has a pending update request.'))
+        if invoice.dex_cancel_request_pending:
+            raise UserError(_('Resolve the pending Invoice Cancellation Request first.'))
         return True
 
     def _dex_update_context_allowed(self):
@@ -143,6 +149,15 @@ class AccountMove(models.Model):
         return moves.with_context(dex_invoice_move_initial_create=None)
 
     def write(self, vals):
+        if (vals.get('state') == 'cancel' and
+                self.env.context.get('dex_invoice_cancel_internal') is not
+                _CANCEL_APPLY_SENTINEL):
+            protected_cancellations = self.filtered(
+                lambda move: move.type == 'out_invoice'
+                and move.state != 'cancel' and move.sale_order_id)
+            if protected_cancellations:
+                raise UserError(_(
+                    'Use Cancel Request so an approver can cancel this sale-order invoice.'))
         protected = {'dex_cancelled_by_request', 'dex_cancel_credit_move_id'} & set(vals)
         if (protected and
                 self.env.context.get('dex_invoice_cancel_internal') is not _CANCEL_APPLY_SENTINEL):
@@ -152,7 +167,7 @@ class AccountMove(models.Model):
                 self.env.context.get('dex_invoice_move_initial_create') is not _MOVE_CREATE_SENTINEL):
             for move in self.filtered(
                     lambda item: item.type == 'out_invoice'
-                    and item.state == 'draft' and item.sale_order_id):
+                    and item.state == 'posted' and item.sale_order_id):
                 if not move._dex_update_context_allowed():
                     raise UserError(_(
                         'Use an approved Invoice Update Request to change the invoice date.'))
@@ -164,17 +179,19 @@ class AccountMove(models.Model):
         return super(AccountMove, self).write(vals)
 
     def action_post(self):
-        pending = self.filtered('dex_update_request_pending')
+        pending = self.filtered(
+            lambda move: move.dex_update_request_pending or move.dex_cancel_request_pending)
         if pending:
             raise UserError(_(
-                'Resolve the pending Invoice Update Request before posting the invoice.'))
+                'Resolve pending invoice requests before posting the invoice.'))
         return super(AccountMove, self).action_post()
 
     def post(self):
-        pending = self.filtered('dex_update_request_pending')
+        pending = self.filtered(
+            lambda move: move.dex_update_request_pending or move.dex_cancel_request_pending)
         if pending:
             raise UserError(_(
-                'Resolve the pending Invoice Update Request before posting the invoice.'))
+                'Resolve pending invoice requests before posting the invoice.'))
         posting_self = self.with_context(dex_invoice_post_internal=_POST_SENTINEL)
         return super(AccountMove, posting_self).post()
 
@@ -195,17 +212,20 @@ class AccountMove(models.Model):
     def action_open_dex_update_request_wizard(self):
         self.ensure_one()
         self._dex_update_request_eligibility()
-        wizard = self.env['dex.invoice.update.request.wizard'].create({
+        wizard_values = {
             'invoice_id': self.id,
-            'line_ids': [(0, 0, {
+            'change_invoice_date': self.state == 'posted',
+        }
+        if self.state == 'draft':
+            wizard_values['line_ids'] = [(0, 0, {
                 'invoice_line_id': line.id,
                 'product_id': line.product_id.id,
                 'description': line.name,
                 'current_quantity': line.quantity,
                 'new_quantity': line.quantity,
                 'product_uom_id': line.product_uom_id.id,
-            }) for line in self.invoice_line_ids.filtered(lambda line: not line.display_type)],
-        })
+            }) for line in self.invoice_line_ids.filtered(lambda line: not line.display_type)]
+        wizard = self.env['dex.invoice.update.request.wizard'].create(wizard_values)
         view = self.env.ref('dex_invoice_cancel.view_update_request_wizard_form')
         return {
             'type': 'ir.actions.act_window',
@@ -230,6 +250,16 @@ class AccountMove(models.Model):
         action['domain'] = [('invoice_id', '=', self.id)]
         action['context'] = {'default_invoice_id': self.id}
         return action
+
+    def button_cancel(self):
+        protected = self.filtered(
+            lambda move: move.type == 'out_invoice' and move.sale_order_id)
+        if (protected and
+                self.env.context.get('dex_invoice_cancel_internal') is not
+                _CANCEL_APPLY_SENTINEL):
+            raise UserError(_(
+                'Use Cancel Request so an approver can cancel this sale-order invoice.'))
+        return super(AccountMove, self).button_cancel()
 
 
 class AccountMoveLine(models.Model):

@@ -7,18 +7,21 @@
             <field name="arch" type="xml">
                 <form string="Request Invoice Update">
                     <group>
+                        <field name="invoice_state" invisible="1"/>
                         <group>
                             <field name="invoice_id"/>
                             <field name="sale_order_id"/>
                         </group>
-                        <group>
+                        <group string="Posted Invoice Date Change"
+                               attrs="{'invisible':[('invoice_state','!=','posted')]}">
                             <field name="current_invoice_date"/>
-                            <field name="change_invoice_date"/>
+                            <field name="change_invoice_date" invisible="1"/>
                             <field name="requested_invoice_date"
-                                   attrs="{'invisible':[('change_invoice_date','=',False)],'required':[('change_invoice_date','=',True)]}"/>
+                                   attrs="{'required':[('invoice_state','=','posted')]}"/>
                         </group>
                     </group>
-                    <field name="line_ids" nolabel="1">
+                    <field name="line_ids" nolabel="1"
+                           attrs="{'invisible':[('invoice_state','!=','draft')]}">
                         <tree editable="bottom" create="0" delete="0">
                             <field name="invoice_line_id" invisible="1"/>
                             <field name="product_id"/>

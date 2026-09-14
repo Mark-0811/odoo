@@ -3,11 +3,11 @@
     'name': 'Dex Invoice Cancellation',
     'summary': 'Approval workflows for invoice cancellation and draft invoice updates',
     'description': """
-        Adds audited approval workflows for fully crediting posted customer
-        invoices and for reducing or deleting lines on draft invoices created
-        from sale orders.
+        Adds audited approval workflows for cancelling draft or fully crediting
+        posted customer invoices, reducing or deleting lines on draft invoices,
+        and changing the invoice date of posted invoices from sale orders.
     """,
-    'version': '13.0.1.0.9',
+    'version': '13.0.1.0.10',
     'author': 'John Raymark LLavanes',
     'website': 'https://johnraymarksuuuu.github.io/',
     'license': 'LGPL-3',

@@ -10,6 +10,8 @@ class InvoiceUpdateRequestWizard(models.TransientModel):
     _description = 'Request Invoice Update'
 
     invoice_id = fields.Many2one('account.move', required=True, readonly=True)
+    invoice_state = fields.Selection(
+        related='invoice_id.state', string='Invoice Status', readonly=True)
     sale_order_id = fields.Many2one(
         'sale.order', related='invoice_id.sale_order_id', readonly=True)
     current_invoice_date = fields.Date(
@@ -30,6 +32,12 @@ class InvoiceUpdateRequestWizard(models.TransientModel):
         self.invoice_id._dex_update_request_eligibility()
         if not (self.justification or '').strip():
             raise UserError(_('Remarks are required.'))
+        if self.invoice_state == 'draft' and self.change_invoice_date:
+            raise UserError(_(
+                'Edit Invoice Date directly while the invoice is draft.'))
+        if self.invoice_state == 'posted' and not self.change_invoice_date:
+            raise UserError(_(
+                'A posted invoice update request must change Invoice Date.'))
         if self.change_invoice_date:
             if not self.requested_invoice_date:
                 raise UserError(_('Requested Invoice Date is required.'))
@@ -56,8 +64,11 @@ class InvoiceUpdateRequestWizard(models.TransientModel):
                 'target_quantity': line.new_quantity if line.change_type == 'reduce' else 0,
             }))
 
+        if self.invoice_state == 'posted' and request_lines:
+            raise UserError(_('Posted invoice lines cannot be updated.'))
+
         if not self.change_invoice_date and not request_lines:
-            raise UserError(_('Request at least one invoice date or line change.'))
+            raise UserError(_('Request at least one invoice line change.'))
 
         request = self.env['dex.invoice.update.request'].create({
             'invoice_id': self.invoice_id.id,
